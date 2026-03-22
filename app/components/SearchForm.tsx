@@ -10,6 +10,7 @@ import { useGameStore } from "../lib/gameStore";
 export function SearchForm() {
   const router = useRouter();
   const setPick = useGameStore((s) => s.setPick);
+  const [bggUsername, setBggUsername] = useState(() => localStorage.getItem("bggUsername") ?? "");
   const [players, setPlayers] = useState("");
   const [duration, setDuration] = useState("");
   const [complexity, setComplexity] = useState<string | null>(null);
@@ -21,13 +22,20 @@ export function SearchForm() {
     const formData = new FormData(e.currentTarget);
     formData.set("complexity", complexity ?? "");
     console.log(Object.fromEntries(formData));
-    const data = await fetchGames(formData);
+    let data;
+    try {
+      data = await fetchGames(formData);
+    } catch (err) {
+      setNotification(err instanceof Error ? err.message : "Failed to fetch games");
+      return;
+    }
     const pick = randomPick(data.items.item);
     if (!pick) {
       setNotification("No Game Matched");
       return;
     }
     setPick(pick.primary, pick.alternatives);
+    localStorage.setItem("bggUsername", bggUsername);
     router.push("/result");
   }
 
@@ -48,6 +56,8 @@ export function SearchForm() {
             type="text"
             name="bggUsername"
             placeholder="e.g. tabletop_pro"
+            value={bggUsername}
+            onChange={(e) => setBggUsername(e.target.value)}
             className="w-full bg-surface-container-low border-none rounded-xl px-4 py-4 focus:ring-2 focus:ring-primary/40 font-medium text-on-surface placeholder:text-outline-variant"
           />
         </div>
@@ -137,7 +147,7 @@ export function SearchForm() {
           <span className="material-symbols-outlined">auto_awesome</span>
         </button>
         <p className="text-center text-on-surface-variant text-[11px] mt-4 font-medium uppercase tracking-[0.2em]">
-          Scanning 482 titles in your vault
+          Made by Chia-En
         </p>
       </div>
     </form>

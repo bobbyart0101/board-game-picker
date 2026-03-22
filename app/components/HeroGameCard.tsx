@@ -1,21 +1,15 @@
 import Image from "next/image";
-
-interface HeroGameCardProps {
-  title: string;
-  players: string;
-  complexityFilled: number;
-  complexityTotal: number;
-  description: string;
-  imageSrc: string;
-  imageAlt: string;
-}
+import { getComplexityLabel } from "@/app/lib/complexity";
+import type { HeroGameCardProps } from "@/app/lib/types";
 
 export function HeroGameCard({
   title,
   players,
   imageSrc,
   imageAlt,
+  statistics,
 }: HeroGameCardProps) {
+  const complexity = getComplexityLabel(statistics.ratings.averageweight["@_value"]);
   return (
     <section className="relative">
       <div className="bg-surface-container-lowest rounded-2xl overflow-hidden editorial-shadow group">
@@ -45,7 +39,7 @@ export function HeroGameCard({
                 Complexity
               </span>
               <p className="text-[10px] text-on-surface-variant font-medium uppercase">
-                light
+                {complexity}
               </p>
             </div>
           </div>

@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { ResultsHeader } from "../components/ResultsHeader";
 import { HeroGameCard } from "../components/HeroGameCard";
 import { AlternativeMatches } from "../components/AlternativeMatches";
@@ -7,8 +9,13 @@ import { useGameStore } from "../lib/gameStore";
 import { mapPrimaryGame, mapAlternativeGame } from "../lib/mapGameData";
 
 export default function ResultPage() {
+  const router = useRouter();
   const primary = useGameStore((s) => s.primary);
   const alternatives = useGameStore((s) => s.alternatives);
+
+  useEffect(() => {
+    if (!primary || !alternatives) router.replace("/");
+  }, [primary, alternatives, router]);
 
   type BGGGame = Parameters<typeof mapPrimaryGame>[0];
   const heroProps = primary ? mapPrimaryGame(primary as BGGGame) : null;

@@ -1,3 +1,7 @@
+import type { HeroGameCardProps, AlternativeMatchCardProps } from "./types";
+
+export type { HeroGameCardProps, AlternativeMatchCardProps };
+
 interface BGGName {
   "@_type": string;
   "@_value": string;
@@ -8,19 +12,11 @@ interface BGGGame {
   minplayers: { "@_value": string };
   maxplayers: { "@_value": string };
   image: string;
-}
-
-export interface HeroGameCardProps {
-  title: string;
-  players: string;
-  imageSrc: string;
-  imageAlt: string;
-}
-
-export interface AlternativeMatchCardProps {
-  title: string;
-  imageSrc: string;
-  imageAlt: string;
+  statistics: {
+    ratings: {
+      averageweight: { "@_value": string };
+    };
+  };
 }
 
 export function mapAlternativeGame(game: BGGGame): AlternativeMatchCardProps {
@@ -49,5 +45,6 @@ export function mapPrimaryGame(game: BGGGame): HeroGameCardProps {
     players,
     imageSrc: game.image,
     imageAlt: `Box of ${title}`,
+    statistics: game.statistics,
   };
 }
