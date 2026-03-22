@@ -9,7 +9,8 @@ export async function GET(request: Request) {
       bggUsername: searchParams.get("bggUsername") ?? undefined,
       players:    searchParams.get("players")    ?? undefined,
       duration:   searchParams.get("duration")   ?? undefined,
-      complexity: searchParams.get("complexity") ?? undefined,
+      complexity:   searchParams.get("complexity")   ?? undefined,
+      mechanicType: searchParams.get("mechanicType") ?? undefined,
     };
     const data = await retrieveGameData(params);
     const { items } = data;

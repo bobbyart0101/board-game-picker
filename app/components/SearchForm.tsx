@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ComplexityChips } from "./ComplexityChips";
+import { MechanicChips } from "./MechanicChips";
+import { MechanicType } from "../lib/types";
 import { fetchGames } from "../lib/fetchGames";
 import { randomPick } from "../lib/randomPick";
 import { useGameStore } from "../lib/gameStore";
@@ -10,30 +12,63 @@ import { useGameStore } from "../lib/gameStore";
 export function SearchForm() {
   const router = useRouter();
   const setPick = useGameStore((s) => s.setPick);
-  const [bggUsername, setBggUsername] = useState(() => localStorage.getItem("bggUsername") ?? "");
+  const [bggUsername, setBggUsername] = useState("");
+
+  useEffect(() => {
+    const stored = localStorage.getItem("bggUsername");
+    if (stored) setBggUsername(stored);
+  }, []);
   const [players, setPlayers] = useState("");
   const [duration, setDuration] = useState("");
   const [complexity, setComplexity] = useState<string | null>(null);
+  const [mechanicType, setMechanicType] = useState<MechanicType | null>(null);
   const [notification, setNotification] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<{
+    bggUsername?: string;
+    players?: string;
+    duration?: string;
+  }>({});
 
   async function submitProposal(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setNotification(null);
+
+    const errors: {
+      bggUsername?: string;
+      players?: string;
+      duration?: string;
+    } = {};
+    if (!bggUsername.trim()) errors.bggUsername = "Username is required";
+    if (players !== "" && parseInt(players) < 1)
+      errors.players = "Number of players must be at least 1";
+    if (duration !== "" && parseInt(duration) < 1)
+      errors.duration = "Duration must be greater than 0";
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+    setFieldErrors({});
     const formData = new FormData(e.currentTarget);
     formData.set("complexity", complexity ?? "");
+    formData.set("mechanicType", mechanicType ?? "");
     console.log(Object.fromEntries(formData));
     let data;
     try {
       data = await fetchGames(formData);
     } catch (err) {
-      setNotification(err instanceof Error ? err.message : "Failed to fetch games");
+      setNotification(
+        err instanceof Error ? err.message : "Failed to fetch games"
+      );
       return;
     }
+
+    console.log(data);
     const pick = randomPick(data.items.item);
     if (!pick) {
       setNotification("No Game Matched");
       return;
     }
+
     setPick(pick.primary, pick.alternatives);
     localStorage.setItem("bggUsername", bggUsername);
     router.push("/result");
@@ -61,6 +96,11 @@ export function SearchForm() {
             className="w-full bg-surface-container-low border-none rounded-xl px-4 py-4 focus:ring-2 focus:ring-primary/40 font-medium text-on-surface placeholder:text-outline-variant"
           />
         </div>
+        {fieldErrors.bggUsername && (
+          <p className="text-error text-xs font-medium mt-1">
+            {fieldErrors.bggUsername}
+          </p>
+        )}
       </section>
 
       {/* Number of Players */}
@@ -82,12 +122,17 @@ export function SearchForm() {
             placeholder="Number of players"
             value={players}
             onChange={(e) => setPlayers(e.target.value)}
-            className="w-full bg-surface-container-low border-none rounded-xl px-4 py-4 focus:ring-2 focus:ring-primary/40 font-medium text-on-surface placeholder:text-outline-variant"
+            className={`w-full bg-surface-container-low border-none rounded-xl px-4 py-4 focus:ring-2 focus:ring-primary/40 font-medium text-on-surface placeholder:text-outline-variant${fieldErrors.players ? " ring-2 ring-error" : ""}`}
           />
           <div className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant font-medium text-sm">
             Players
           </div>
         </div>
+        {fieldErrors.players && (
+          <p className="text-error text-xs font-medium mt-1">
+            {fieldErrors.players}
+          </p>
+        )}
       </section>
 
       {/* Game Duration */}
@@ -108,12 +153,17 @@ export function SearchForm() {
             placeholder="Duration"
             value={duration}
             onChange={(e) => setDuration(e.target.value)}
-            className="w-full bg-surface-container-low border-none rounded-xl px-4 py-4 focus:ring-2 focus:ring-primary/40 font-medium text-on-surface placeholder:text-outline-variant"
+            className={`w-full bg-surface-container-low border-none rounded-xl px-4 py-4 focus:ring-2 focus:ring-primary/40 font-medium text-on-surface placeholder:text-outline-variant${fieldErrors.duration ? " ring-2 ring-error" : ""}`}
           />
           <div className="absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant font-medium text-sm">
             Minutes
           </div>
         </div>
+        {fieldErrors.duration && (
+          <p className="text-error text-xs font-medium mt-1">
+            {fieldErrors.duration}
+          </p>
+        )}
       </section>
 
       {/* Complexity */}
@@ -127,6 +177,19 @@ export function SearchForm() {
           </label>
         </div>
         <ComplexityChips onChange={setComplexity} />
+      </section>
+
+      {/* Mechanic Type */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-2 mb-2">
+          <span className="material-symbols-outlined text-primary text-sm">
+            extension
+          </span>
+          <label className="font-label text-xs font-semibold uppercase tracking-widest text-on-surface-variant">
+            Mechanic Type
+          </label>
+        </div>
+        <MechanicChips onChange={setMechanicType} />
       </section>
 
       {/* Notification */}
